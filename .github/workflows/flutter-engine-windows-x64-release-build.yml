@@ -32,7 +32,16 @@ jobs:
 
           git -C src/flutter status
           
-          gclient sync -D
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            gclient sync -D
+            if ($LASTEXITCODE -eq 0) {
+              break
+            }
+            if ($attempt -eq 3) {
+              exit $LASTEXITCODE
+            }
+            Start-Sleep -Seconds 15
+          }
 
           # fix https://github.com/rustdesk/rustdesk/issues/10085
           $filePath = "revert_to_gethostname.zip"
