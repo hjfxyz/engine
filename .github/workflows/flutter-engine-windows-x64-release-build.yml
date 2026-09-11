@@ -35,6 +35,18 @@ jobs:
           $filePath = "src/flutter/fml/hex_codec.h"
           (Get-Content $filePath | ForEach-Object { if ($_ -eq '#include <string_view>') {"#include <string>`n" + $_} else {$_}}) | Set-Content $filePath
 
+          $filePath = "src/flutter/shell/platform/windows/platform_handler.cc"
+          $content = Get-Content $filePath -Raw
+          $start = $content.IndexOf("std::variant<std::wstring, int> ScopedClipboard::GetString()")
+          $end = $content.IndexOf("int ScopedClipboard::SetString", $start)
+          if ($start -lt 0 -or $end -lt 0) {
+            throw "ScopedClipboard::GetString was not found"
+          }
+          $before = $content.Substring(0, $start)
+          $function = $content.Substring($start, $end - $start).Replace("return ::GetLastError();", "return static_cast<int>(::GetLastError());")
+          $after = $content.Substring($end)
+          Set-Content $filePath ($before + $function + $after) -NoNewline
+
           git -C src/flutter status
           
           for ($attempt = 1; $attempt -le 3; $attempt++) {
