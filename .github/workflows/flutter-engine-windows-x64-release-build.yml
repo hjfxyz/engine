@@ -25,9 +25,9 @@ jobs:
           mkdir engine
           cd engine
           
-          fetch --nohooks flutter
+          git clone --no-checkout https://github.com/flutter/engine.git src/flutter
           git -C src/flutter checkout 3.24.5
-          Get-ChildItem src/flutter -Filter package_config.json -Recurse -Force | Remove-Item -Force
+          gclient config --name src/flutter https://github.com/flutter/engine.git
 
           $filePath = "src/flutter/shell/platform/windows/flutter_windows_engine.cc"
           (Get-Content $filePath) -replace 'ClearCurrent', 'MakeCurrent' | Set-Content $filePath
