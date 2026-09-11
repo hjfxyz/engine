@@ -67,8 +67,15 @@ jobs:
           
           # Compiling the Flutter engine
           cd src
+          Get-PSDrive -PSProvider FileSystem
           python .\flutter\tools\gn --runtime-mode=release --no-prebuilt-dart-sdk
-          ninja -C .\out\host_release
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          ninja -C .\out\host_release 2>&1 | Tee-Object -FilePath "${{ github.workspace }}\ninja.log"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
           
           # Check and compress files
           $outputPath = "${{ github.workspace }}\windows-x64-release.zip"
@@ -79,6 +86,14 @@ jobs:
           } else {
             Write-Error "Build output files not found!"
           }
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-engine-build-log
+          path: ninja.log
+          if-no-files-found: ignore
 
       # The file will be uploaded to the release page of the repository, and the tag is the branch name of the currently executing workflow.
       - name: Upload files to a GitHub release
